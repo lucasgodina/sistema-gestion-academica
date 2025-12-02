@@ -1,5 +1,6 @@
 env/
 venv/
+.venv/
 db.sqlite3
 db.sqlite3-journal
 __pycache__/
@@ -9,3 +10,6 @@ Thumbs.db
 .vscode/
 .idea/
 pyproject.toml
+.env
+*.log
+staticfiles/
