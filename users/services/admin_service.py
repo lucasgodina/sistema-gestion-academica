@@ -67,6 +67,22 @@ class AdminService:
         return admin
 
     @staticmethod
+    @transaction.atomic
+    def deactivate_admin(admin: Admin) -> None:
+        """
+        Desactiva un administrador estableciendo is_active=False en su usuario asociado.
+        Esto previene que el administrador pueda iniciar sesión sin borrar sus datos.
+        """
+        # Verificación de seguridad por si la base de datos es inconsistente
+        if not admin.user:
+            raise ValidationError("El administrador no tiene un usuario asociado.")
+
+        # Desactivamos SOLO el usuario de autenticación (Django User)
+        # El perfil 'Admin' queda intacto como historial.
+        admin.user.is_active = False
+        admin.user.save(update_fields=['is_active'])
+
+    @staticmethod
     def validate_dni_unique(dni: str) -> bool:
         """
         Valida que el DNI sea único globalmente.

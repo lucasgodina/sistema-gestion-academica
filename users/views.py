@@ -90,14 +90,7 @@ class AdminDeleteView(SuperuserRequiredMixin, DeleteView):
             return HttpResponseRedirect(self.get_success_url())
 
         try:
-            with transaction.atomic():
-                # Desactivar el perfil Admin
-                admin_obj.is_active = False
-                admin_obj.save()
-                # Desactivar el Usuario de Django
-                if admin_obj.user:
-                    admin_obj.user.is_active = False
-                    admin_obj.user.save()
+            AdminService.deactivate_admin(admin_obj)
             messages.success(request, "Administrador desactivado correctamente.")
         except Exception as e:
             messages.error(request, f"Error al desactivar el administrador: {str(e)}")
