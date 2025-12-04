@@ -96,12 +96,34 @@ class AdminDeleteView(SuperuserRequiredMixin, SingleObjectMixin, View):
 
         try:
             # Lógica de Soft Delete
-            # Opción A: Usando tu servicio (recomendado)
             AdminService.deactivate_admin(admin_obj)
 
             messages.success(request, f"Administrador {admin_obj.surname} desactivado correctamente.")
         except Exception as e:
             messages.error(request, f"Error al desactivar: {str(e)}")
+
+        return redirect(self.success_url)
+
+
+class AdminActivateView(SuperuserRequiredMixin, SingleObjectMixin, View):
+    """
+    Vista personalizada para REACTIVAR un admin (Undo Soft Delete).
+    Sigue el mismo patrón que AdminDeleteView para mantener consistencia.
+    """
+    model = Admin
+    success_url = reverse_lazy("users:admin_list")
+
+    def post(self, request, *args, **kwargs):
+        # Obtenemos el objeto basado en la URL (pk) gracias a SingleObjectMixin
+        self.object = self.get_object()
+        admin_obj = self.object
+
+        try:
+            AdminService.activate_admin(admin_obj)
+
+            messages.success(request, f"Administrador {admin_obj.surname} reactivado correctamente.")
+        except Exception as e:
+            messages.error(request, f"Error al reactivar: {str(e)}")
 
         return redirect(self.success_url)
 

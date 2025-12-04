@@ -83,6 +83,16 @@ class AdminService:
         admin.user.save(update_fields=['is_active'])
 
     @staticmethod
+    def activate_admin(admin: Admin):
+        """
+        Reactiva un administrador y su usuario asociado.
+        """
+        if admin.user:
+            admin.user.is_active = True
+            admin.user.save(update_fields=['is_active'])
+        return admin
+
+    @staticmethod
     def validate_dni_unique(dni: str) -> bool:
         """
         Valida que el DNI sea único globalmente.
