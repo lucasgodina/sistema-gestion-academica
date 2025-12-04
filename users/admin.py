@@ -136,6 +136,15 @@ class AdminAdmin(admin.ModelAdmin):
     user_is_active.admin_order_field = "user__is_active"
     user_is_active.boolean = True  # Muestra un ícono de checkmark/X en lugar de True/False
 
+    def get_queryset(self, request):
+        """
+        Sobrescribimos el queryset para optimizar la carga de datos relacionados.
+        Usamos select_related para traer la información del usuario en la misma consulta SQL
+        y evitar el problema de N+1 queries.
+        """
+        qs = super().get_queryset(request)
+        return qs.select_related('user')
+
     # Acciones personalizadas
     actions = ["activate_admins", "deactivate_admins"]
 

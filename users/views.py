@@ -4,7 +4,9 @@ from django.contrib.auth.views import PasswordChangeView
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
+from django.views import View
 from django.views.generic import TemplateView, ListView
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormView, DeleteView
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -74,30 +76,34 @@ class AdminCreateView(SuperuserRequiredMixin, FormView):
             return self.form_invalid(form)
 
 
-class AdminDeleteView(SuperuserRequiredMixin, DeleteView):
+class AdminDeleteView(SuperuserRequiredMixin, SingleObjectMixin, View):
+    """
+    Vista personalizada para DESACTIVAR (Soft Delete) un admin.
+    No usamos DeleteView para evitar borrados accidentales de SQL.
+    """
     model = Admin
-    template_name = "users/admin_confirm_delete.html"
     success_url = reverse_lazy("users:admin_list")
-    context_object_name = "admin"
 
-    # Lógica de "Borrado" suave (Override delete o form_valid)
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        # Obtenemos el objeto basado en la URL (pk)
         self.object = self.get_object()
-        admin_obj: Admin = self.object
+        admin_obj = self.object
 
-        # Seguridad (Anti-Lockout)
-        # Validamos que no se esté borrando el usuario actual
+        # Seguridad: No auto-desactivarse
         if admin_obj.user == request.user:
-            messages.error(self.request, "No puedes desactivar tu propio usuario.")
-            return HttpResponseRedirect(self.get_success_url())
+            messages.error(request, "No puedes desactivar tu propio usuario.")
+            return redirect(self.success_url)
 
         try:
+            # Lógica de Soft Delete
+            # Opción A: Usando tu servicio (recomendado)
             AdminService.deactivate_admin(admin_obj)
-            messages.success(request, "Administrador desactivado correctamente.")
-        except Exception as e:
-            messages.error(request, f"Error al desactivar el administrador: {str(e)}")
 
-        return HttpResponseRedirect(self.get_success_url())
+            messages.success(request, f"Administrador {admin_obj.surname} desactivado correctamente.")
+        except Exception as e:
+            messages.error(request, f"Error al desactivar: {str(e)}")
+
+        return redirect(self.success_url)
 
 
 class TeacherCreateView(AdminRequiredMixin, FormView):
